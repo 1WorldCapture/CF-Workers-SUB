@@ -1,0 +1,10 @@
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,me.com
+DOMAIN-KEYWORD,appleid
+DOMAIN,apple.com
+DOMAIN-SUFFIX,browser-intake-datadoghq.com
+DOMAIN-SUFFIX,calendar.google.com
+DOMAIN-SUFFIX,play.google.com
+PROCESS-NAME,node.exe
+DOMAIN-SUFFIX,paypal.com
+    
