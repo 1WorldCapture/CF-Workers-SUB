@@ -149,12 +149,12 @@ export async function handleRequest(request, env) {
       const compiledSubConfig = await compileSubConfigToClashOptions(state.subConfig, normalizedNodes.map(node => node.name));
       if (compiledSubConfig) {
         const 默认分组 = 构建默认代理组(normalizedNodes.map(node => node.name));
-        const 已定义分组 = new Set(compiledSubConfig.groupDefinitions.map(group => group.name));
+        const 自定义分组名 = new Set(compiledSubConfig.groupDefinitions.map(group => group.name));
         自定义Clash配置 = 生成Clash配置(normalizedNodes, {
           ...compiledSubConfig,
           groupDefinitions: [
+            ...默认分组.filter(group => !自定义分组名.has(group.name)),
             ...compiledSubConfig.groupDefinitions,
-            ...默认分组.filter(group => !已定义分组.has(group.name)),
           ],
           skipNormalize: true,
         });
