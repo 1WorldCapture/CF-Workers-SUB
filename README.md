@@ -1,121 +1,160 @@
-# ⚙ 自建汇聚订阅 CF-Workers-SUB
+# CF-Workers-SUB
 
-![自建汇聚订阅 CF-Workers-SUB](./sub.png)
+基于 [cmliu/CF-Workers-SUB](https://github.com/cmliu/CF-Workers-SUB) 的个人 fork，将多个代理节点和订阅合并为单一链接，部署在 Cloudflare Workers 上。
 
-这是一个将多个节点和订阅合并为单一链接的工具，支持自动适配与自定义分流，简化了订阅管理。
+## 改动
 
-> [!CAUTION]
-> **汇聚订阅非base64订阅时**，会自动生成一个**有效期为24小时的临时订阅**，并提交给**订阅转换后端**来完成订阅转换，可避免您的汇聚订阅地址泄露。
+- **内置 subconverter 规则解析**：不需要第三方 subconverter 后端，直接在 Worker 内解析 `[custom]` 格式的分流规则（支持 `ruleset`、`custom_proxy_group`、`clash_rule_base` 等指令）
+- **模块化重构**：源码拆分到 `src/` 目录，使用 esbuild 构建
+- **自定义 Clash 规则集**：在 `Clash/Ruleset/` 和 `Clash/customized-*.list` 中维护个人分流规则
 
-> [!WARNING]
-> **汇聚订阅非base64订阅时**，如果您的节点数量**十分庞大**，订阅转换后端将需要较长时间才能完成订阅转换，这会导致部分梯子客户端在订阅时提示超时而无法完成订阅（说直白一点就是**汇聚节点池的节点时容易导致Clash订阅超时**）！
->
-> 可自行删减订阅节点数量，提高订阅转换效率！
+## 项目结构
 
-## 🛠 功能特点
-1. **节点链接自动转换成base64订阅链接：** 这是最基础的功能，可以将您的节点自动转换为base64格式的订阅链接；
-2. **将多个base64订阅汇聚成一个订阅链接：** 可以将多个订阅（例如不同的机场）合并成一个订阅，只需使用一个订阅地址即可获取所有节点；
-3. **自动适配不同梯子的格式订阅链接：** 依托[订阅转换](https://sub.cmliussss.com/)服务，自动将订阅转换为不同梯子所需的格式，实现一条订阅适配多种梯子；
-4. **专属代理分流规则：** 自定义分流规则，实现个性化的分流模式；
-5. **更多功能等待发掘...**
+```
+src/
+├── index.js          # Worker 入口
+├── handler.js        # 请求路由
+├── config.js         # 默认配置与 Clash 模板
+├── kv.js             # KV 存储操作
+├── clash.js          # Clash 配置生成
+├── subconfig.js      # 订阅转换配置
+├── subscriptions.js  # 订阅拉取与合并
+├── remote.js         # 远程资源获取
+├── notifications.js  # TG 通知
+├── ini.js            # INI 解析
+└── utils.js          # 工具函数
 
-## 🎬 视频教程
-- **[自建订阅！CF-Workers-SUB 教你如何将多节点多订阅汇聚合并为一个订阅！](https://youtu.be/w6rRY4FDd58)**
+Clash/
+├── Ruleset/          # 分流规则集 (AI, Tailscale, fp-browser 等)
+├── customized-*.list # 个人自定义分流规则
+├── config/           # 订阅转换配置文件
+└── *.list            # ACL4SSR 规则集
+```
 
-## 🤝 社区支持
-- Telegram 交流群: [@CMLiussss](https://t.me/CMLiussss)
-- 感谢 [Alice Networks](https://alicenetworks.net/) 提供的云服务器维持 [CM订阅转换服务](https://sub.cmliussss.com/)
+## 部署
 
-## 📦 Pages 部署方法
+### 前置条件
 
-<details>
-<summary><code><strong>「 Pages GitHub 部署文字教程 」</strong></code></summary>
+- [Node.js](https://nodejs.org/)（建议 18+）
+- 一个 [Cloudflare](https://dash.cloudflare.com/) 账号
 
-### 1. 部署 Cloudflare Pages：
-   - 在 Github 上先 Fork 本项目，并点上 Star !!!
-   - 在 Cloudflare Pages 控制台中选择 `连接到 Git`后，选中 `CF-Workers-SUB`项目后点击 `开始设置`。
+### 第一步：安装 Wrangler 并登录
 
-### 2. 给 Pages绑定 自定义域：
-   - 在 Pages控制台的 `自定义域`选项卡，下方点击 `设置自定义域`。
-   - 填入你的自定义次级域名，注意不要使用你的根域名，例如：
-     您分配到的域名是 `fuck.cloudns.biz`，则添加自定义域填入 `sub.fuck.cloudns.biz`即可；
-   - 按照 Cloudflare 的要求将返回你的域名DNS服务商，添加 该自定义域 `sub`的 CNAME记录 `CF-Workers-SUB.pages.dev` 后，点击 `激活域`即可。
+```bash
+# 安装 Wrangler CLI（Cloudflare 的命令行工具）
+npm i -g wrangler
 
-### 3. 修改 快速订阅入口 ：
+# 登录你的 Cloudflare 账号（会弹出浏览器让你授权）
+wrangler login
+```
 
-  例如您的pages项目域名为：`sub.fuck.cloudns.biz`；
-   - 添加 `TOKEN` 变量，快速订阅访问入口，默认值为: `auto` ，获取订阅器默认节点订阅地址即 `/auto` ，例如 `https://sub.fuck.cloudns.biz/auto`
+### 第二步：创建 KV 存储
 
-### 4. 添加你的节点和订阅链接：
-   1. 绑定**变量名称**为`KV`的**KV命名空间**；
-   2. 访问 `https://sub.fuck.cloudns.biz/auto`，添加你的自建节点链接和机场订阅链接，确保每行一个链接，例如：
-      ```
-      vless://b7a392e2-4ef0-4496-90bc-1c37bb234904@cf.090227.xyz:443?encryption=none&security=tls&sni=edgetunnel-2z2.pages.dev&fp=random&type=ws&host=edgetunnel-2z2.pages.dev&path=%2F%3Fed%3D2048#%E5%8A%A0%E5%85%A5%E6%88%91%E7%9A%84%E9%A2%91%E9%81%93t.me%2FCMLiussss%E8%A7%A3%E9%94%81%E6%9B%B4%E5%A4%9A%E4%BC%98%E9%80%89%E8%8A%82%E7%82%B9
-      vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogIuWKoOWFpeaIkeeahOmikemBk3QubWUvQ01MaXVzc3Nz6Kej6ZSB5pu05aSa5LyY6YCJ6IqC54K5PuiLseWbvSDlgKvmlabph5Hono3ln44iLA0KICAiYWRkIjogImNmLjA5MDIyNy54eXoiLA0KICAicG9ydCI6ICI4NDQzIiwNCiAgImlkIjogIjAzZmNjNjE4LWI5M2QtNjc5Ni02YWVkLThhMzhjOTc1ZDU4MSIsDQogICJhaWQiOiAiMCIsDQogICJzY3kiOiAiYXV0byIsDQogICJuZXQiOiAid3MiLA0KICAidHlwZSI6ICJub25lIiwNCiAgImhvc3QiOiAicHBmdjJ0bDl2ZW9qZC1tYWlsbGF6eS5wYWdlcy5kZXYiLA0KICAicGF0aCI6ICIvamFkZXIuZnVuOjQ0My9saW5rdndzIiwNCiAgInRscyI6ICJ0bHMiLA0KICAic25pIjogInBwZnYydGw5dmVvamQtbWFpbGxhenkucGFnZXMuZGV2IiwNCiAgImFscG4iOiAiIiwNCiAgImZwIjogIiINCn0=
-      https://sub.xf.free.hr/auto
-      https://hy2sub.pages.dev
-      ```
+KV 用来保存你的节点和订阅数据，必须先创建：
 
-</details>
+```bash
+wrangler kv namespace create KV
+```
 
-## 🛠️ Workers 部署方法
+运行后会输出类似这样的内容：
 
-<details>
-<summary><code><strong>「 Workers 部署文字教程 」</strong></code></summary>
+```
+🌀 Creating namespace with title "sub-worker-KV"
+✨ Success!
+Add the following to your configuration file in your kv_namespaces array:
+[[kv_namespaces]]
+binding = "KV"
+id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"    ← 记住这个 ID
+```
 
-### 1. 部署 Cloudflare Worker：
+### 第三步：修改配置文件
 
-   - 在 Cloudflare Worker 控制台中创建一个新的 Worker。
-   - 将 [_worker.js](https://github.com/cmliu/CF-Workers-SUB/blob/main/_worker.js)  的内容粘贴到 Worker 编辑器中。
+```bash
+cp wrangler.toml.example wrangler.toml
+```
 
+用编辑器打开 `wrangler.toml`，需要修改两个地方：
 
-### 2. 修改 订阅入口 ：
+#### 3a. 填入 KV ID
 
-  例如您的workers项目域名为：`sub.cmliussss.workers.dev`；
-   - 通过修改 `mytoken` 赋值内容，达到修改你专属订阅的入口，避免订阅泄漏。
-     ```
-     let mytoken = 'auto';
-     ```
-     如上所示，你的订阅地址则如下：
-     ```url
-     https://sub.cmliussss.workers.dev/auto
-     或
-     https://sub.cmliussss.workers.dev/?token=auto
-     ```
+找到最后三行（被 `#` 注释掉的部分），去掉 `#` 号，并把 `id` 替换为你刚才创建的 KV ID：
 
+```toml
+[[kv_namespaces]]
+binding = "KV"
+id = "你的KV ID"    ← 替换这里
+```
 
-### 3. 添加你的节点或订阅链接：
-   1. 绑定**变量名称**为`KV`的**KV命名空间**；
-   2. 访问 `https://sub.cmliussss.workers.dev/auto`，添加你的自建节点链接和机场订阅链接，确保每行一个链接，例如：
-      ```
-      vless://b7a392e2-4ef0-4496-90bc-1c37bb234904@cf.090227.xyz:443?encryption=none&security=tls&sni=edgetunnel-2z2.pages.dev&fp=random&type=ws&host=edgetunnel-2z2.pages.dev&path=%2F%3Fed%3D2048#%E5%8A%A0%E5%85%A5%E6%88%91%E7%9A%84%E9%A2%91%E9%81%93t.me%2FCMLiussss%E8%A7%A3%E9%94%81%E6%9B%B4%E5%A4%9A%E4%BC%98%E9%80%89%E8%8A%82%E7%82%B9
-      vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogIuWKoOWFpeaIkeeahOmikemBk3QubWUvQ01MaXVzc3Nz6Kej6ZSB5pu05aSa5LyY6YCJ6IqC54K5PuiLseWbvSDlgKvmlabph5Hono3ln44iLA0KICAiYWRkIjogImNmLjA5MDIyNy54eXoiLA0KICAicG9ydCI6ICI4NDQzIiwNCiAgImlkIjogIjAzZmNjNjE4LWI5M2QtNjc5Ni02YWVkLThhMzhjOTc1ZDU4MSIsDQogICJhaWQiOiAiMCIsDQogICJzY3kiOiAiYXV0byIsDQogICJuZXQiOiAid3MiLA0KICAidHlwZSI6ICJub25lIiwNCiAgImhvc3QiOiAicHBmdjJ0bDl2ZW9qZC1tYWlsbGF6eS5wYWdlcy5kZXYiLA0KICAicGF0aCI6ICIvamFkZXIuZnVuOjQ0My9saW5rdndzIiwNCiAgInRscyI6ICJ0bHMiLA0KICAic25pIjogInBwZnYydGw5dmVvamQtbWFpbGxhenkucGFnZXMuZGV2IiwNCiAgImFscG4iOiAiIiwNCiAgImZwIjogIiINCn0=
-      https://sub.xf.free.hr/auto
-      https://hy2sub.pages.dev
-      ```
+#### 3b. 配置自定义分流规则（可选）
 
-</details>
+在 `wrangler.toml` 末尾添加 `SUBCONFIG` 变量，使用 subconverter 的 `[custom]` 语法定义分流规则。
+本项目内置了规则解析，**不需要依赖第三方 subconverter 后端**：
 
-## 📋 变量说明
-| 变量名 | 示例 | 必填 | 备注 | 
-|-|-|-|-|
-| TOKEN | `auto` | ✅ | 汇聚订阅的订阅配置路径地址，例如：`/auto` | 
-| GUEST | `test` | ❌ | 汇聚订阅的访客订阅TOKEN，例如：`/sub?token=test` | 
-| LINK | `vless://b7a39...`,`vmess://ew0K...`,`https://sub...` | ❌ | 可同时放入多个节点链接与多个订阅链接，链接之间用换行做间隔（添加**KV命名空间**后，变量将不会使用）|
-| TGTOKEN | `6894123456:XXXXXXXXXX0qExVsBPUhHDAbXXXXXqWXgBA` | ❌ | 发送TG通知的机器人token | 
-| TGID | `6946912345` | ❌ | 接收TG通知的账户数字ID | 
-| SUBNAME | `CF-Workers-SUB` | ❌ | 订阅名称 |
-| SUBAPI | `SUBAPI.cmliussss.net` | ❌ | clash、singbox等 订阅转换后端 | 
-| SUBCONFIG | [https://raw.github.../ACL4SSR_Online_MultiCountry.ini](https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online_MultiCountry.ini) | ❌ | clash、singbox等 订阅转换配置文件 | 
+```toml
+[vars]
+SUBCONFIG = """
+[custom]
+; 格式：ruleset=策略组名,规则集URL
+; 规则按从上到下的顺序匹配，先匹配到的优先
 
+ruleset=DIRECT,https://raw.githubusercontent.com/你的用户名/CF-Workers-SUB/master/Clash/customized-local.list
+ruleset=DIRECT,https://raw.githubusercontent.com/你的用户名/CF-Workers-SUB/master/Clash/LocalAreaNetwork.list
+ruleset=美国家宽,https://raw.githubusercontent.com/你的用户名/CF-Workers-SUB/master/Clash/Ruleset/AI.list
+ruleset=美国高速,https://raw.githubusercontent.com/你的用户名/CF-Workers-SUB/master/Clash/Ruleset/YouTube.list
 
-## ⚠️ 注意事项
-项目中，TGTOKEN和TGID在使用时需要先到Telegram注册并获取。其中，TGTOKEN是telegram bot的凭证，TGID是用来接收通知的telegram用户或者组的id。
+enable_rule_generator=true
+overwrite_original_rules=false
+"""
+```
 
+> **说明**：策略组名（如 `美国家宽`、`美国高速`）需要与你节点名中的地域关键词匹配，系统会自动按关键词将节点归入对应策略组。
+> `overwrite_original_rules=false` 表示在自定义规则之后，保留内置的默认规则作为兜底。
 
-## ⭐ Star 星星走起
-[![Stargazers over time](https://starchart.cc/cmliu/CF-Workers-SUB.svg?variant=adaptive)](https://starchart.cc/cmliu/CF-Workers-SUB)
+### 第四步：构建并部署
 
+```bash
+npm install
+npm run deploy
+```
 
-# 🙏 致谢
-[Alice Networks LTD](https://alicenetworks.net/)，[mianayang](https://github.com/mianayang/myself/blob/main/cf-workers/sub/sub.js)、[ACL4SSR](https://github.com/ACL4SSR/ACL4SSR/tree/master/Clash/config)、[肥羊](https://sub.v1.mk/)
+部署成功后会显示你的 Worker 地址，类似：
+
+```
+https://sub-worker.<你的ID>.workers.dev
+```
+
+### 第五步：使用
+
+部署完成后有两个入口：
+
+| 用途 | 地址 |
+|------|------|
+| **设置订阅源**（添加/管理你的节点和订阅链接） | `https://sub-worker.<你的ID>.workers.dev/auto` |
+| **导入订阅**（复制到代理客户端使用） | `https://sub-worker.<你的ID>.workers.dev/auto?sub` |
+
+> 其中 `auto` 是默认 TOKEN，可通过环境变量 `TOKEN` 自定义。
+
+## 环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `TOKEN` | `auto` | 订阅入口路径 |
+| `GUESTTOKEN` / `GUEST` | - | 访客订阅 token |
+| `SUBNAME` | `CF-Workers-SUB` | 订阅名称 |
+| `SUBCONFIG` | - | 自定义分流规则，支持 subconverter 的 `[custom]` 语法（内置解析，无需第三方后端） |
+| `TGTOKEN` | - | Telegram Bot Token（用于通知） |
+| `TGID` | - | Telegram 接收通知的 Chat ID |
+
+## 开发
+
+```bash
+# 监听文件变动自动重新构建
+npm run dev
+
+# 本地预览
+wrangler dev
+```
+
+## 致谢
+
+[cmliu/CF-Workers-SUB](https://github.com/cmliu/CF-Workers-SUB) · [ACL4SSR](https://github.com/ACL4SSR/ACL4SSR)
