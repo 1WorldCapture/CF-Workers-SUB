@@ -114,7 +114,7 @@ export async function compileSubConfigToClashOptions(subConfigSource = '', proxy
   const defaultRuleEntries = parsedConfig.overwriteOriginalRules
     ? []
     : 提取规则条目(规范化Clash规则(内置Clash规则));
-  const allRuleEntries = 去重保序([...defaultRuleEntries, ...compiledRules]);
+  const allRuleEntries = 去重保序([...compiledRules, ...defaultRuleEntries]);
   const rulesText = 构建规则文本(allRuleEntries);
 
   let templateHeader = 内置Clash模板头;

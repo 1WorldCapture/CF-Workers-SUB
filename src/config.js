@@ -3,19 +3,19 @@ https://cfxr.eu.org/getSub
 `;
 
 export const DEFAULT_STATE = Object.freeze({
-  mytoken: 'auto',
-  guestToken: '',
-  BotToken: '',
-  ChatID: '',
-  TG: 0,
-  FileName: 'CF-Workers-SUB',
-  SUBUpdateTime: 6,
-  totalTB: 99,
-  timestamp: 4102329600000,
-  MainData: DEFAULT_MAIN_DATA,
-  subConverter: 'SUBAPI.cmliussss.net',
-  subConfig: '',
-  subProtocol: 'https',
+	mytoken: 'auto',
+	guestToken: '',
+	BotToken: '',
+	ChatID: '',
+	TG: 0,
+	FileName: 'CF-Workers-SUB',
+	SUBUpdateTime: 6,
+	totalTB: 99,
+	timestamp: 4102329600000,
+	MainData: DEFAULT_MAIN_DATA,
+	subConverter: 'SUBAPI.cmliussss.net',
+	subConfig: '',
+	subProtocol: 'https',
 });
 
 export const 内置Clash地域关键词 = ["美国", "香港", "日本", "台湾", "新加坡", "英国", "德国", "尼日利亚"];
@@ -132,7 +132,6 @@ export const 内置Clash规则 = `rules:
 	- 'DOMAIN-SUFFIX,linux.do,美国高速'
 	- 'DOMAIN-SUFFIX,npmjs.com,美国高速'
 	- 'DOMAIN-SUFFIX,sufe.pro,美国高速'
-	- 'DOMAIN-SUFFIX,youtube.com,美国家宽'
 	- 'DOMAIN-SUFFIX,us-west-2.compute.amazonaws.com,美国高速'
 	- 'DOMAIN-SUFFIX,prss.microsoft.com,美国高速'
 	- 'DOMAIN,playwright.dev,美国高速'
@@ -310,7 +309,6 @@ export const 内置Clash规则 = `rules:
 	- 'DOMAIN-KEYWORD,amazon,美国家宽'
 	- 'DOMAIN-KEYWORD,google,美国家宽'
 	- 'DOMAIN-KEYWORD,gmail,美国家宽'
-	- 'DOMAIN-KEYWORD,youtube,美国家宽'
 	- 'DOMAIN-KEYWORD,facebook,美国家宽'
 	- 'DOMAIN-SUFFIX,fb.me,美国家宽'
 	- 'DOMAIN-SUFFIX,fbcdn.net,美国家宽'
@@ -664,28 +662,28 @@ export const 内置Clash规则 = `rules:
 	- 'MATCH,美国家宽'`;
 
 export function buildRuntimeState(env = {}) {
-  let subConverter = env.SUBAPI || DEFAULT_STATE.subConverter;
-  let subProtocol = 'https';
+	let subConverter = env.SUBAPI || DEFAULT_STATE.subConverter;
+	let subProtocol = 'https';
 
-  if (subConverter.includes('http://')) {
-    subConverter = subConverter.split('//')[1];
-    subProtocol = 'http';
-  } else {
-    subConverter = subConverter.split('//')[1] || subConverter;
-  }
+	if (subConverter.includes('http://')) {
+		subConverter = subConverter.split('//')[1];
+		subProtocol = 'http';
+	} else {
+		subConverter = subConverter.split('//')[1] || subConverter;
+	}
 
-  return {
-    ...DEFAULT_STATE,
-    mytoken: env.TOKEN || DEFAULT_STATE.mytoken,
-    guestToken: env.GUESTTOKEN || env.GUEST || DEFAULT_STATE.guestToken,
-    BotToken: env.TGTOKEN || DEFAULT_STATE.BotToken,
-    ChatID: env.TGID || DEFAULT_STATE.ChatID,
-    TG: env.TG || DEFAULT_STATE.TG,
-    FileName: env.SUBNAME || DEFAULT_STATE.FileName,
-    SUBUpdateTime: env.SUBUPTIME || DEFAULT_STATE.SUBUpdateTime,
-    subConverter,
-    subConfig: env.SUBCONFIG || DEFAULT_STATE.subConfig,
-    hasCustomSubConfig: Boolean(env.SUBCONFIG),
-    subProtocol,
-  };
+	return {
+		...DEFAULT_STATE,
+		mytoken: env.TOKEN || DEFAULT_STATE.mytoken,
+		guestToken: env.GUESTTOKEN || env.GUEST || DEFAULT_STATE.guestToken,
+		BotToken: env.TGTOKEN || DEFAULT_STATE.BotToken,
+		ChatID: env.TGID || DEFAULT_STATE.ChatID,
+		TG: env.TG || DEFAULT_STATE.TG,
+		FileName: env.SUBNAME || DEFAULT_STATE.FileName,
+		SUBUpdateTime: env.SUBUPTIME || DEFAULT_STATE.SUBUpdateTime,
+		subConverter,
+		subConfig: env.SUBCONFIG || DEFAULT_STATE.subConfig,
+		hasCustomSubConfig: Boolean(env.SUBCONFIG),
+		subProtocol,
+	};
 }
