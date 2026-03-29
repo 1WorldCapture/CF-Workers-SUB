@@ -19,7 +19,7 @@ export const DEFAULT_STATE = Object.freeze({
 });
 
 export const 内置Clash地域关键词 = ["美国", "香港", "日本", "台湾", "新加坡", "英国", "德国", "尼日利亚"];
-export const 内置Clash地区分组关键词 = ["台湾", "新加坡", "日本", "英国", "德国", "尼日利亚"];
+export const 内置Clash地区分组关键词 = [];
 export const 内置Clash模板头 = `mixed-port: 7890
 allow-lan: true
 bind-address: '*'
