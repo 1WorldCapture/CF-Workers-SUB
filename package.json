@@ -1,0 +1,14 @@
+{
+  "name": "cf-workers-sub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=esm --platform=browser --target=es2022 --outfile=_worker.js",
+    "dev": "npm run build -- --watch",
+    "deploy": "npm run build && wrangler deploy",
+    "check": "node --check _worker.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.3"
+  }
+}
