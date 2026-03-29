@@ -1,5 +1,5 @@
 import { buildRuntimeState } from './config.js';
-import { 标准化Clash节点, 生成Clash配置, 生成内置Clash配置, 收集URI节点 } from './clash.js';
+import { 标准化Clash节点, 构建默认代理组, 生成Clash配置, 生成内置Clash配置, 收集URI节点 } from './clash.js';
 import { handleKVEditor, 迁移地址列表 } from './kv.js';
 import { sendMessage } from './notifications.js';
 import { compileSubConfigToClashOptions } from './subconfig.js';
@@ -148,8 +148,14 @@ export async function handleRequest(request, env) {
       const normalizedNodes = 标准化Clash节点(clash代理集合);
       const compiledSubConfig = await compileSubConfigToClashOptions(state.subConfig, normalizedNodes.map(node => node.name));
       if (compiledSubConfig) {
+        const 默认分组 = 构建默认代理组(normalizedNodes.map(node => node.name));
+        const 已定义分组 = new Set(compiledSubConfig.groupDefinitions.map(group => group.name));
         自定义Clash配置 = 生成Clash配置(normalizedNodes, {
           ...compiledSubConfig,
+          groupDefinitions: [
+            ...compiledSubConfig.groupDefinitions,
+            ...默认分组.filter(group => !已定义分组.has(group.name)),
+          ],
           skipNormalize: true,
         });
       }

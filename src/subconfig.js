@@ -3,6 +3,8 @@ import { 内置Clash模板头, 内置Clash规则 } from './config.js';
 import { parseSubConfig } from './ini.js';
 import { fetchTextWithCache } from './remote.js';
 
+const 远程配置缓存秒数 = 300;
+
 function 去重保序(items = []) {
   const seen = new Set();
   const result = [];
@@ -44,7 +46,7 @@ async function 编译规则集条目(entry) {
     return compiledRule ? [compiledRule] : [];
   }
 
-  const remoteText = await fetchTextWithCache(entry.source, { cacheTtlSeconds: 3600, timeoutMs: 8000 });
+  const remoteText = await fetchTextWithCache(entry.source, { cacheTtlSeconds: 远程配置缓存秒数, timeoutMs: 8000 });
   return remoteText
     .replace(/\r\n?/g, '\n')
     .split('\n')
@@ -105,7 +107,7 @@ export async function compileSubConfigToClashOptions(subConfigSource = '', proxy
   const isInlineSubConfig = /(^|\n)\s*\[custom\]\s*$/m.test(subConfigSource);
   const iniText = isInlineSubConfig
     ? subConfigSource
-    : await fetchTextWithCache(subConfigSource, { cacheTtlSeconds: 3600, timeoutMs: 8000 });
+    : await fetchTextWithCache(subConfigSource, { cacheTtlSeconds: 远程配置缓存秒数, timeoutMs: 8000 });
 
   const parsedConfig = parseSubConfig(iniText);
   if (!parsedConfig.enableRuleGenerator) return null;
@@ -119,7 +121,7 @@ export async function compileSubConfigToClashOptions(subConfigSource = '', proxy
 
   let templateHeader = 内置Clash模板头;
   if (parsedConfig.clashRuleBase) {
-    const baseText = await fetchTextWithCache(parsedConfig.clashRuleBase, { cacheTtlSeconds: 3600, timeoutMs: 8000 });
+    const baseText = await fetchTextWithCache(parsedConfig.clashRuleBase, { cacheTtlSeconds: 远程配置缓存秒数, timeoutMs: 8000 });
     templateHeader = 提取模板头(baseText);
   }
 

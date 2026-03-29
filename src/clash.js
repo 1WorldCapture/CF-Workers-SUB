@@ -517,6 +517,23 @@ function 节点包含DialerProxy(node) {
   return /dialer-proxy\s*:\s*dialer/.test(source);
 }
 
+export function 构建默认代理组(所有节点名 = []) {
+  const 额外地区组 = 内置Clash地区分组关键词.map(groupName => ({
+    name: groupName,
+    type: 'select',
+    proxies: 所有节点名.filter(name => name.includes(groupName)),
+  }));
+
+  return [
+    { name: '苏菲家宽', type: 'select', proxies: 所有节点名 },
+    { name: '美国家宽', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && name.includes('家宽')) },
+    { name: '美国高速', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && !name.includes('家宽')) },
+    { name: 'dialer', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && !name.includes('家宽')) },
+    { name: '家宽', type: 'select', proxies: 所有节点名.filter(name => name.includes('家宽')) },
+    ...额外地区组,
+  ];
+}
+
 export function 生成Clash配置(nodes = [], options = {}) {
   const {
     templateHeader = 内置Clash模板头,
@@ -576,19 +593,7 @@ export function 生成内置Clash配置(nodes = []) {
     filterNode: node => 允许内置Clash节点(node.name),
   });
   const 所有节点名 = normalizedNodes.map(node => node.name);
-  const 额外地区组 = 内置Clash地区分组关键词.map(groupName => ({
-    name: groupName,
-    type: 'select',
-    proxies: 所有节点名.filter(name => name.includes(groupName)),
-  }));
-  const groupDefinitions = [
-    { name: '苏菲家宽', type: 'select', proxies: 所有节点名 },
-    { name: '美国家宽', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && name.includes('家宽')) },
-    { name: '美国高速', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && !name.includes('家宽')) },
-    { name: 'dialer', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && !name.includes('家宽')) },
-    { name: '家宽', type: 'select', proxies: 所有节点名.filter(name => name.includes('家宽')) },
-    ...额外地区组,
-  ];
+  const groupDefinitions = 构建默认代理组(所有节点名);
 
   return 生成Clash配置(normalizedNodes, {
     templateHeader: 内置Clash模板头,

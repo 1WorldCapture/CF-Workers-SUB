@@ -1,17 +1,28 @@
 const 文本缓存 = new Map();
+const 远程缓存版本 = '20260329-1';
+
+function 获取缓存键(url) {
+  return `${远程缓存版本}:${url}`;
+}
+
+function 获取边缘缓存请求(url) {
+  const cacheKeyUrl = new URL(url);
+  cacheKeyUrl.searchParams.set('__cfwsub_cache_v', 远程缓存版本);
+  return new Request(cacheKeyUrl.toString(), { method: 'GET' });
+}
 
 function 获取缓存(url) {
-  const cached = 文本缓存.get(url);
+  const cached = 文本缓存.get(获取缓存键(url));
   if (!cached) return null;
   if (cached.expiresAt <= Date.now()) {
-    文本缓存.delete(url);
+    文本缓存.delete(获取缓存键(url));
     return null;
   }
   return cached.text;
 }
 
 function 写入缓存(url, text, cacheTtlSeconds) {
-  文本缓存.set(url, {
+  文本缓存.set(获取缓存键(url), {
     text,
     expiresAt: Date.now() + cacheTtlSeconds * 1000,
   });
@@ -19,7 +30,7 @@ function 写入缓存(url, text, cacheTtlSeconds) {
 
 export async function fetchTextWithCache(url, options = {}) {
   const {
-    cacheTtlSeconds = 3600,
+    cacheTtlSeconds = 300,
     timeoutMs = 8000,
     headers,
   } = options;
@@ -28,7 +39,7 @@ export async function fetchTextWithCache(url, options = {}) {
   if (memoryCached !== null) return memoryCached;
 
   const cache = globalThis.caches?.default;
-  const cacheKey = new Request(url, { method: 'GET' });
+  const cacheKey = 获取边缘缓存请求(url);
   if (cache) {
     const cachedResponse = await cache.match(cacheKey);
     if (cachedResponse) {

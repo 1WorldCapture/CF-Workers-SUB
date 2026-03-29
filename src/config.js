@@ -104,7 +104,7 @@ export const 内置Clash规则 = `rules:
 	- 'PROCESS-NAME,MoreLogin Helper (GPU),美国家宽'
 	- 'PROCESS-PATH,/Applications/4K Video Downloader+.app/Contents/MacOS/4kvideodownloaderplus,美国家宽'
 	- 'PROCESS-PATH,/Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/MacOS/ChatGPT Atlas,美国家宽'
-	- 'PROCESS-PATH,/Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/Frameworks/ChatGPT Atlas Framework.framework/Versions/143.0.7499.40/Helpers/ChatGPT Atlas (Renderer).app/Contents/MacOS/ChatGPT Atlas (Renderer), 美国家宽'
+	- 'PROCESS-PATH,/Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/Frameworks/ChatGPT Atlas Framework.framework/Versions/current/Helpers/ChatGPT Atlas (Renderer).app/Contents/MacOS/ChatGPT Atlas (Renderer), 美国家宽'
 	- 'PROCESS-PATH,/Applications/MoreLogin.app/Contents/Frameworks/MoreLogin Helper.app/Contents/MacOS/MoreLogin Helper,美国家宽'
 	- 'PROCESS-PATH,/Applications/MoreLogin.app/Contents/Frameworks/MoreLogin Helper (Plugin).app/Contents/MacOS/MoreLogin Helper (Plugin),美国家宽'
 	- 'PROCESS-PATH,/Applications/MoreLogin.app/Contents/Frameworks/MoreLogin Helper (GPU).app/Contents/MacOS/MoreLogin Helper (GPU),美国家宽'
