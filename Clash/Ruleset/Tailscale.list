@@ -1,6 +1,6 @@
-IP-CIDR,100.64.0.0/10
-IP-CIDR6,fd7a:115c:a1e0::/48
-IP-CIDR,100.100.100.100/32
+IP-CIDR,100.64.0.0/10,no-resolve
+IP-CIDR6,fd7a:115c:a1e0::/48,no-resolve
+IP-CIDR,100.100.100.100/32,no-resolve
 DOMAIN-SUFFIX,tailf3efbe.ts.net
 DOMAIN-SUFFIX,ts.net
 PROCESS-NAME,Tailscale
