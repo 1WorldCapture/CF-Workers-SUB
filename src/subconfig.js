@@ -56,6 +56,15 @@ async function 编译规则集条目(entry) {
     .filter(Boolean);
 }
 
+async function 安全编译规则集条目(entry) {
+  try {
+    return await 编译规则集条目(entry);
+  } catch (error) {
+    console.error(`编译 ruleset 失败，已跳过: ${entry.source}`, error);
+    return [];
+  }
+}
+
 function 构建规则文本(ruleEntries = []) {
   return `rules:\n${ruleEntries.map(rule => `    - '${rule}'`).join('\n')}`;
 }
@@ -112,7 +121,7 @@ export async function compileSubConfigToClashOptions(subConfigSource = '', proxy
   const parsedConfig = parseSubConfig(iniText);
   if (!parsedConfig.enableRuleGenerator) return null;
 
-  const compiledRules = (await Promise.all(parsedConfig.rulesets.map(编译规则集条目))).flat();
+  const compiledRules = (await Promise.all(parsedConfig.rulesets.map(安全编译规则集条目))).flat();
   const defaultRuleEntries = parsedConfig.overwriteOriginalRules
     ? []
     : 提取规则条目(规范化Clash规则(内置Clash规则));
@@ -121,8 +130,12 @@ export async function compileSubConfigToClashOptions(subConfigSource = '', proxy
 
   let templateHeader = 内置Clash模板头;
   if (parsedConfig.clashRuleBase) {
-    const baseText = await fetchTextWithCache(parsedConfig.clashRuleBase, { cacheTtlSeconds: 远程配置缓存秒数, timeoutMs: 8000 });
-    templateHeader = 提取模板头(baseText);
+    try {
+      const baseText = await fetchTextWithCache(parsedConfig.clashRuleBase, { cacheTtlSeconds: 远程配置缓存秒数, timeoutMs: 8000 });
+      templateHeader = 提取模板头(baseText);
+    } catch (error) {
+      console.error(`获取 clash_rule_base 失败，已回退内置模板: ${parsedConfig.clashRuleBase}`, error);
+    }
   }
 
   return {
