@@ -1,5 +1,5 @@
 import { buildRuntimeState } from './config.js';
-import { 标准化Clash节点, 构建默认代理组, 生成Clash配置, 生成内置Clash配置, 收集URI节点 } from './clash.js';
+import { 标准化Clash节点, 构建默认代理组, 生成Clash配置, 生成内置Clash配置, 收集URI节点, 规范化URI节点 } from './clash.js';
 import { handleKVEditor, 迁移地址列表 } from './kv.js';
 import { sendMessage } from './notifications.js';
 import { compileSubConfigToClashOptions } from './subconfig.js';
@@ -73,17 +73,17 @@ export async function handleRequest(request, env) {
   }
 
   const 重新汇总所有链接 = await ADD(`${mainData}\n${urls.join('\n')}`);
-  let 自建节点 = '';
+  const 自建节点数组 = [];
   let 订阅链接 = '';
   for (const item of 重新汇总所有链接) {
     if (item.toLowerCase().startsWith('http')) {
       订阅链接 += item + '\n';
     } else {
-      自建节点 += item + '\n';
+      自建节点数组.push(规范化URI节点(item));
     }
   }
 
-  mainData = 自建节点;
+  mainData = 自建节点数组.filter(item => item?.trim?.()).join('\n');
   urls = await ADD(订阅链接);
   await sendMessage(state, `#获取订阅 ${state.FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 

@@ -5,6 +5,7 @@ import {
   内置Clash规则,
 } from './config.js';
 import {
+  base64Encode,
   base64Decode,
   safeDecodeURIComponent,
   清理空字段,
@@ -15,6 +16,67 @@ function 解析节点名称(hash, fallback = '未命名节点') {
   if (!hash) return fallback;
   const rawName = hash.startsWith('#') ? hash.slice(1) : hash;
   return safeDecodeURIComponent(rawName) || fallback;
+}
+
+function 解析节点链接与自定义名称(line = '') {
+  const trimmedLine = line.trim();
+  if (!trimmedLine.includes('://')) return { 节点链接: trimmedLine, 自定义名称: '' };
+
+  if (trimmedLine.startsWith('vmess://')) {
+    const commaIndex = trimmedLine.indexOf(',');
+    if (commaIndex === -1) return { 节点链接: trimmedLine, 自定义名称: '' };
+    return {
+      节点链接: trimmedLine.slice(0, commaIndex).trim(),
+      自定义名称: trimmedLine.slice(commaIndex + 1).trim(),
+    };
+  }
+
+  const hashIndex = trimmedLine.indexOf('#');
+  if (hashIndex === -1) return { 节点链接: trimmedLine, 自定义名称: '' };
+  const commaIndex = trimmedLine.indexOf(',', hashIndex + 1);
+  if (commaIndex === -1) return { 节点链接: trimmedLine, 自定义名称: '' };
+  return {
+    节点链接: trimmedLine.slice(0, commaIndex).trim(),
+    自定义名称: trimmedLine.slice(commaIndex + 1).trim(),
+  };
+}
+
+function 覆盖URI节点名称(line = '', customName = '') {
+  const 节点名称 = customName.trim();
+  if (!节点名称) return line.trim();
+
+  if (line.startsWith('vmess://')) {
+    try {
+      const config = JSON.parse(base64Decode(line.slice('vmess://'.length)));
+      config.ps = 节点名称;
+      return `vmess://${base64Encode(JSON.stringify(config))}`;
+    } catch (error) {
+      console.log('覆盖 vmess 节点名称失败', error);
+      return line.trim();
+    }
+  }
+
+  if (line.startsWith('ss://')) {
+    const hashIndex = line.indexOf('#');
+    const base = hashIndex === -1 ? line : line.slice(0, hashIndex);
+    return `${base}#${encodeURIComponent(节点名称)}`;
+  }
+
+  try {
+    const isHy2 = line.startsWith('hy2://');
+    const parsed = new URL(isHy2 ? `hysteria2://${line.slice('hy2://'.length)}` : line);
+    parsed.hash = 节点名称;
+    return isHy2 ? parsed.toString().replace(/^hysteria2:\/\//, 'hy2://') : parsed.toString();
+  } catch (error) {
+    console.log('覆盖 URI 节点名称失败', error);
+    return line.trim();
+  }
+}
+
+export function 规范化URI节点(line = '') {
+  const { 节点链接, 自定义名称 } = 解析节点链接与自定义名称(line);
+  if (!自定义名称) return 节点链接;
+  return 覆盖URI节点名称(节点链接, 自定义名称);
 }
 
 function 构建WS配置(pathValue, hostValue) {
@@ -252,7 +314,7 @@ function 解析Hy2节点(line) {
 export function 收集URI节点(lines = []) {
   const results = [];
   for (const rawLine of lines) {
-    const line = rawLine.trim();
+    const line = 规范化URI节点(rawLine);
     if (!line || !line.includes('://')) continue;
     let proxy = null;
     if (line.startsWith('vmess://')) proxy = 解析Vmess节点(line);

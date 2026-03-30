@@ -48,6 +48,13 @@ export function base64Decode(str) {
   return decoder.decode(bytes);
 }
 
+export function base64Encode(str = '') {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
 export async function MD5MD5(text) {
   const encoder = new TextEncoder();
   const firstPass = await crypto.subtle.digest('MD5', encoder.encode(text));
