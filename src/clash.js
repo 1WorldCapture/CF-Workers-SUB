@@ -31,6 +31,19 @@ function 解析节点链接与自定义名称(line = '') {
     };
   }
 
+  if (trimmedLine.startsWith('socks5://')) {
+    const commaIndex = trimmedLine.lastIndexOf(',');
+    const atIndex = trimmedLine.lastIndexOf('@');
+    const colonIndex = trimmedLine.lastIndexOf(':');
+    if (commaIndex === -1 || commaIndex < atIndex || commaIndex < colonIndex) {
+      return { 节点链接: trimmedLine, 自定义名称: '' };
+    }
+    return {
+      节点链接: trimmedLine.slice(0, commaIndex).trim(),
+      自定义名称: trimmedLine.slice(commaIndex + 1).trim(),
+    };
+  }
+
   const hashIndex = trimmedLine.indexOf('#');
   if (hashIndex === -1) return { 节点链接: trimmedLine, 自定义名称: '' };
   const commaIndex = trimmedLine.indexOf(',', hashIndex + 1);
@@ -311,6 +324,24 @@ function 解析Hy2节点(line) {
   }
 }
 
+function 解析Socks5节点(line) {
+  try {
+    const parsed = new URL(line);
+    const proxy = {
+      type: 'socks5',
+      server: parsed.hostname,
+      port: Number(parsed.port || 1080),
+      username: safeDecodeURIComponent(parsed.username || ''),
+      password: safeDecodeURIComponent(parsed.password || ''),
+      udp: true,
+    };
+    return 创建Clash节点(解析节点名称(parsed.hash, `${parsed.hostname}:${parsed.port || 1080}`), proxy);
+  } catch (error) {
+    console.log('解析 socks5 节点失败', error);
+    return null;
+  }
+}
+
 export function 收集URI节点(lines = []) {
   const results = [];
   for (const rawLine of lines) {
@@ -321,6 +352,7 @@ export function 收集URI节点(lines = []) {
     else if (line.startsWith('vless://')) proxy = 解析Vless节点(line);
     else if (line.startsWith('trojan://')) proxy = 解析Trojan节点(line);
     else if (line.startsWith('ss://')) proxy = 解析SS节点(line);
+    else if (line.startsWith('socks5://')) proxy = 解析Socks5节点(line);
     else if (line.startsWith('hy2://') || line.startsWith('hysteria2://')) proxy = 解析Hy2节点(line);
     if (proxy) results.push(proxy);
   }
@@ -515,16 +547,20 @@ export function 提取规则条目(rulesText = '') {
   return entries;
 }
 
-function 应用美国SSDialer补丁(nodes = []) {
+function 需要Dialer补丁的代理类型(type = '') {
+  return ['ss', 'socks5'].includes((type || '').toLowerCase());
+}
+
+function 应用美国代理Dialer补丁(nodes = []) {
   return nodes.map(node => {
     if (!node?.name || !node.name.includes('美国')) return node;
     if (node.proxyObject) {
-      if ((node.proxyObject.type || '').toLowerCase() !== 'ss') return node;
+      if (!需要Dialer补丁的代理类型(node.proxyObject.type)) return node;
       if (node.proxyObject['dialer-proxy'] === 'dialer') return node;
       return 创建Clash节点(node.name, { ...node.proxyObject, name: undefined, 'dialer-proxy': 'dialer' });
     }
     const sourceBlock = node.rawBlock || node.yamlBlock || '';
-    if (提取代理类型(sourceBlock) !== 'ss') return node;
+    if (!需要Dialer补丁的代理类型(提取代理类型(sourceBlock))) return node;
     const updatedBlock = 追加DialerProxy到代理块(sourceBlock);
     return {
       ...node,
@@ -555,7 +591,7 @@ function 唯一化Clash节点(nodes = []) {
 export function 标准化Clash节点(nodes = [], options = {}) {
   const { filterNode } = options;
   return 唯一化Clash节点(
-    应用美国SSDialer补丁(nodes).filter(node => {
+    应用美国代理Dialer补丁(nodes).filter(node => {
       if (!node?.name) return false;
       return typeof filterNode === 'function' ? filterNode(node) : true;
     }),
