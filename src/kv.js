@@ -10,6 +10,43 @@ export async function 迁移地址列表(env, txt = 'ADD.txt') {
   return false;
 }
 
+const 订阅缓存键 = 'SUB_CACHE.json';
+
+export async function 读取订阅缓存(env, txt = 订阅缓存键) {
+  if (!env.KV) return null;
+  try {
+    const content = await env.KV.get(txt);
+    if (!content) return null;
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed.result !== 'string') return null;
+    return {
+      version: parsed.version || 1,
+      updatedAt: parsed.updatedAt || '',
+      result: parsed.result,
+      clashConfig: typeof parsed.clashConfig === 'string' ? parsed.clashConfig : '',
+    };
+  } catch (error) {
+    console.error('读取订阅缓存时发生错误:', error);
+    return null;
+  }
+}
+
+export async function 写入订阅缓存(env, snapshot, txt = 订阅缓存键) {
+  if (!env.KV || !snapshot || typeof snapshot.result !== 'string') return false;
+  try {
+    await env.KV.put(txt, JSON.stringify({
+      version: snapshot.version || 1,
+      updatedAt: snapshot.updatedAt || new Date().toISOString(),
+      result: snapshot.result,
+      clashConfig: typeof snapshot.clashConfig === 'string' ? snapshot.clashConfig : '',
+    }));
+    return true;
+  } catch (error) {
+    console.error('写入订阅缓存时发生错误:', error);
+    return false;
+  }
+}
+
 export async function handleKVEditor(request, env, state, txt = 'ADD.txt', guest) {
   const url = new URL(request.url);
   try {

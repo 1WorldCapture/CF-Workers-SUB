@@ -1,6 +1,6 @@
 import { buildRuntimeState } from './config.js';
 import { 标准化Clash节点, 构建默认代理组, 生成Clash配置, 生成内置Clash配置, 收集URI节点, 规范化URI节点 } from './clash.js';
-import { handleKVEditor, 迁移地址列表 } from './kv.js';
+import { handleKVEditor, 读取订阅缓存, 写入订阅缓存, 迁移地址列表 } from './kv.js';
 import { sendMessage } from './notifications.js';
 import { compileSubConfigToClashOptions } from './subconfig.js';
 import { getSUB } from './subscriptions.js';
@@ -26,6 +26,90 @@ function encodeBase64Fallback(data) {
   return base64.slice(0, base64.length - padding) + '=='.slice(0, padding);
 }
 
+function 编码订阅内容(result = '') {
+  try {
+    return btoa(result);
+  } catch {
+    return encodeBase64Fallback(result);
+  }
+}
+
+function 规范化订阅内容(reqData = '') {
+  const utf8Encoder = new TextEncoder();
+  const encodedData = utf8Encoder.encode(reqData);
+  const utf8Decoder = new TextDecoder();
+  const text = utf8Decoder.decode(encodedData);
+  const uniqueLines = new Set(text.split('\n'));
+  return [...uniqueLines].join('\n');
+}
+
+async function 生成Clash订阅配置(state, clash代理集合) {
+  let 自定义Clash配置 = '';
+  if (state.hasCustomSubConfig && state.subConfig) {
+    try {
+      const normalizedNodes = 标准化Clash节点(clash代理集合);
+      const compiledSubConfig = await compileSubConfigToClashOptions(state.subConfig, normalizedNodes.map(node => node.name));
+      if (compiledSubConfig) {
+        const 默认分组 = 构建默认代理组(normalizedNodes.map(node => node.name));
+        const 自定义分组名 = new Set(compiledSubConfig.groupDefinitions.map(group => group.name));
+        自定义Clash配置 = 生成Clash配置(normalizedNodes, {
+          ...compiledSubConfig,
+          groupDefinitions: [
+            ...默认分组.filter(group => !自定义分组名.has(group.name)),
+            ...compiledSubConfig.groupDefinitions,
+          ],
+          skipNormalize: true,
+        });
+      }
+    } catch (error) {
+      console.error('编译 SUBCONFIG 失败，回退内置 Clash 配置', error);
+    }
+  }
+
+  return 自定义Clash配置 || 生成内置Clash配置(clash代理集合) || '';
+}
+
+function 创建订阅缓存快照(result, clashConfig = '') {
+  return {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    result,
+    clashConfig,
+  };
+}
+
+function 构建响应头(state, request) {
+  return {
+    'content-type': 'text/plain; charset=utf-8',
+    'Profile-Update-Interval': `${state.SUBUpdateTime}`,
+    'Profile-web-page-url': request.url.includes('?') ? request.url.split('?')[0] : request.url,
+    // 'Subscription-Userinfo': `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
+  };
+}
+
+function 从缓存快照构建响应(snapshot, options) {
+  const {
+    responseHeaders,
+    订阅格式,
+    token,
+    fakeToken,
+    userAgent,
+    state,
+  } = options;
+  const headers = { ...responseHeaders };
+  const base64Data = 编码订阅内容(snapshot?.result || '');
+
+  if (订阅格式 === 'base64' || token === fakeToken || !snapshot?.clashConfig) {
+    return new Response(base64Data, { headers });
+  }
+
+  if (!userAgent.includes('mozilla')) {
+    headers['Content-Disposition'] = `attachment; filename*=utf-8''${encodeURIComponent(state.FileName)}`;
+  }
+
+  return new Response(snapshot.clashConfig, { headers });
+}
+
 export async function handleRequest(request, env) {
   const userAgentHeader = request.headers.get('User-Agent');
   const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : 'null';
@@ -42,6 +126,7 @@ export async function handleRequest(request, env) {
   const UD = Math.floor(((state.timestamp - Date.now()) / state.timestamp * state.totalTB * 1099511627776) / 2);
   const total = state.totalTB * 1099511627776;
   const expire = Math.floor(state.timestamp / 1000);
+  const responseHeaders = 构建响应头(state, request);
 
   if (!([state.mytoken, fakeToken, 访客订阅].includes(token) || url.pathname === `/${state.mytoken}` || url.pathname.includes(`/${state.mytoken}?`))) {
     if (state.TG == 1 && url.pathname !== '/' && url.pathname !== '/favicon.ico') {
@@ -109,72 +194,47 @@ export async function handleRequest(request, env) {
   if (订阅链接数组.length > 0) {
     const 请求订阅响应内容 = await getSUB(订阅链接数组, request, 追加UA, userAgentHeader);
     console.log(请求订阅响应内容);
-    req_data += 请求订阅响应内容[0].join('\n');
-    clash代理集合.push(...请求订阅响应内容[1]);
+    if (!请求订阅响应内容.全部成功) {
+      console.error('订阅拉取失败，停止本次合并并回退缓存:', 请求订阅响应内容.失败订阅);
+      const 缓存快照 = await 读取订阅缓存(env);
+      if (缓存快照) {
+        return 从缓存快照构建响应(缓存快照, {
+          responseHeaders,
+          订阅格式,
+          token,
+          fakeToken,
+          userAgent,
+          state,
+        });
+      }
+      return new Response('订阅拉取失败，且暂无可用缓存。', {
+        status: 503,
+        headers: responseHeaders,
+      });
+    }
+    req_data += 请求订阅响应内容.订阅内容.join('\n');
+    clash代理集合.push(...请求订阅响应内容.clash代理集合);
   }
 
-  const utf8Encoder = new TextEncoder();
-  const encodedData = utf8Encoder.encode(req_data);
-  const utf8Decoder = new TextDecoder();
-  const text = utf8Decoder.decode(encodedData);
-  const uniqueLines = new Set(text.split('\n'));
-  const result = [...uniqueLines].join('\n');
+  const result = 规范化订阅内容(req_data);
+  const 需要生成Clash配置 = !!env.KV || !(订阅格式 === 'base64' || token === fakeToken);
+  const clashConfig = 需要生成Clash配置 ? await 生成Clash订阅配置(state, clash代理集合) : '';
+  const 缓存快照 = 创建订阅缓存快照(result, clashConfig);
 
-  let base64Data;
-  try {
-    base64Data = btoa(result);
-  } catch {
-    base64Data = encodeBase64Fallback(result);
+  if (env.KV) {
+    await 写入订阅缓存(env, 缓存快照);
   }
-
-  const responseHeaders = {
-    'content-type': 'text/plain; charset=utf-8',
-    'Profile-Update-Interval': `${state.SUBUpdateTime}`,
-    'Profile-web-page-url': request.url.includes('?') ? request.url.split('?')[0] : request.url,
-    // 'Subscription-Userinfo': `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
-  };
 
   void UD;
   void total;
   void expire;
 
-  if (订阅格式 === 'base64' || token === fakeToken) {
-    return new Response(base64Data, { headers: responseHeaders });
-  }
-
-  let 自定义Clash配置 = '';
-  if (state.hasCustomSubConfig && state.subConfig) {
-    try {
-      const normalizedNodes = 标准化Clash节点(clash代理集合);
-      const compiledSubConfig = await compileSubConfigToClashOptions(state.subConfig, normalizedNodes.map(node => node.name));
-      if (compiledSubConfig) {
-        const 默认分组 = 构建默认代理组(normalizedNodes.map(node => node.name));
-        const 自定义分组名 = new Set(compiledSubConfig.groupDefinitions.map(group => group.name));
-        自定义Clash配置 = 生成Clash配置(normalizedNodes, {
-          ...compiledSubConfig,
-          groupDefinitions: [
-            ...默认分组.filter(group => !自定义分组名.has(group.name)),
-            ...compiledSubConfig.groupDefinitions,
-          ],
-          skipNormalize: true,
-        });
-      }
-    } catch (error) {
-      console.error('编译 SUBCONFIG 失败，回退内置 Clash 配置', error);
-    }
-  }
-
-  if (!自定义Clash配置) {
-    自定义Clash配置 = 生成内置Clash配置(clash代理集合);
-  }
-
-  if (!自定义Clash配置) {
-    return new Response(base64Data, { headers: responseHeaders });
-  }
-
-  if (!userAgent.includes('mozilla')) {
-    responseHeaders['Content-Disposition'] = `attachment; filename*=utf-8''${encodeURIComponent(state.FileName)}`;
-  }
-
-  return new Response(自定义Clash配置, { headers: responseHeaders });
+  return 从缓存快照构建响应(缓存快照, {
+    responseHeaders,
+    订阅格式,
+    token,
+    fakeToken,
+    userAgent,
+    state,
+  });
 }

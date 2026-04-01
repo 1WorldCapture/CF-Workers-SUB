@@ -3,7 +3,12 @@ import { 提取Clash代理块, 收集URI节点 } from './clash.js';
 
 export async function getSUB(api, request, 追加UA, userAgentHeader) {
   if (!api || api.length === 0) {
-    return [[], []];
+    return {
+      订阅内容: [],
+      clash代理集合: [],
+      全部成功: true,
+      失败订阅: [],
+    };
   }
   api = [...new Set(api)];
 
@@ -26,19 +31,34 @@ export async function getSUB(api, request, 追加UA, userAgentHeader) {
       if (response.status === 'rejected') {
         const reason = response.reason;
         if (reason && reason.name === 'AbortError') {
-          return { status: '超时', value: null, apiUrl: api[index] };
+          return { status: '超时', value: null, apiUrl: api[index], error: '请求超时' };
         }
-        console.error(`请求失败: ${api[index]}, 错误信息: ${reason.status} ${reason.statusText}`);
-        return { status: '请求失败', value: null, apiUrl: api[index] };
+        const error = reason instanceof Response
+          ? `${reason.status} ${reason.statusText}`
+          : reason?.message || String(reason);
+        console.error(`请求失败: ${api[index]}, 错误信息: ${error}`);
+        return { status: '请求失败', value: null, apiUrl: api[index], error };
       }
-      return { status: response.status, value: response.value, apiUrl: api[index] };
+      return { status: response.status, value: response.value, apiUrl: api[index], error: '' };
     });
 
     console.log(modifiedResponses);
 
+    const 失败订阅 = modifiedResponses
+      .filter(response => response.status !== 'fulfilled')
+      .map(({ apiUrl, status, error }) => ({ apiUrl, status, error }));
+
+    if (失败订阅.length > 0) {
+      return {
+        订阅内容: [],
+        clash代理集合: [],
+        全部成功: false,
+        失败订阅,
+      };
+    }
+
     for (const response of modifiedResponses) {
-      if (response.status !== 'fulfilled') continue;
-      const content = await response.value || 'null';
+      const content = response.value || 'null';
       if (content.includes('proxies:')) {
         clash代理集合.push(...提取Clash代理块(content));
       } else if (content.includes('outbounds"') && content.includes('inbounds"')) {
@@ -58,12 +78,27 @@ export async function getSUB(api, request, 追加UA, userAgentHeader) {
     }
   } catch (error) {
     console.error(error);
+    return {
+      订阅内容: [],
+      clash代理集合: [],
+      全部成功: false,
+      失败订阅: [{
+        apiUrl: 'internal',
+        status: '异常',
+        error: error?.message || String(error),
+      }],
+    };
   } finally {
     clearTimeout(timeout);
   }
 
   const 订阅内容 = await ADD(newapi + 异常订阅);
-  return [订阅内容, clash代理集合];
+  return {
+    订阅内容,
+    clash代理集合,
+    全部成功: true,
+    失败订阅: [],
+  };
 }
 
 export async function getUrl(request, targetUrl, 追加UA, userAgentHeader, signal) {
