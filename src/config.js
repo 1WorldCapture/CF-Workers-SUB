@@ -3,22 +3,31 @@ https://cfxr.eu.org/getSub
 `;
 
 export const DEFAULT_STATE = Object.freeze({
-	mytoken: 'auto',
-	guestToken: '',
-	BotToken: '',
-	ChatID: '',
-	TG: 0,
-	FileName: 'CF-Workers-SUB',
-	SUBUpdateTime: 6,
-	totalTB: 99,
-	timestamp: 4102329600000,
-	MainData: DEFAULT_MAIN_DATA,
-	subConverter: 'SUBAPI.cmliussss.net',
-	subConfig: '',
-	subProtocol: 'https',
+  mytoken: "auto",
+  guestToken: "",
+  BotToken: "",
+  ChatID: "",
+  TG: 0,
+  FileName: "CF-Workers-SUB",
+  SUBUpdateTime: 6,
+  totalTB: 99,
+  timestamp: 4102329600000,
+  MainData: DEFAULT_MAIN_DATA,
+  subConverter: "SUBAPI.cmliussss.net",
+  subConfig: "",
+  subProtocol: "https",
 });
 
-export const 内置Clash地域关键词 = ["美国", "香港", "日本", "台湾", "新加坡", "英国", "德国", "尼日利亚"];
+export const 内置Clash地域关键词 = [
+  "美国",
+  "香港",
+  "日本",
+  "台湾",
+  "新加坡",
+  "英国",
+  "德国",
+  "尼日利亚",
+];
 export const 内置Clash地区分组关键词 = [];
 export const 内置Clash模板头 = `mixed-port: 7890
 allow-lan: true
@@ -32,16 +41,17 @@ sniffer:
 dns:
     enable: true
     ipv6: false
-    proxy-server-nameserver: [223.5.5.5, 119.29.29.29]
-    default-nameserver: [223.5.5.5, 119.29.29.29]
+    use-hosts: true
     enhanced-mode: fake-ip
     fake-ip-range: 198.18.0.1/16
-    use-hosts: true
+    default-nameserver: [223.5.5.5, 119.29.29.29]
+    proxy-server-nameserver: ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query']
     nameserver: ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query']
-    fallback: ['https://1.1.1.1/dns-query', 'https://8.8.8.8/dns-query', 'tls://8.8.4.4:853']
-    fallback-filter: { geoip: true, ipcidr: [240.0.0.0/4, 0.0.0.0/32] }
+    fallback: []
 proxies:`;
 export const 内置Clash规则 = `rules:
+  - 'DOMAIN-SUFFIX,whoer.com,美国家宽'
+  - 'DOMAIN-SUFFIX,whoer.net,美国家宽'
 	- 'IP-CIDR,160.79.104.0/22,美国家宽,no-resolve'
 	- 'IP-CIDR,34.160.0.0/12,美国家宽,no-resolve'
 	- 'IP-CIDR,34.96.0.0/14,美国家宽,no-resolve'
@@ -557,28 +567,28 @@ export const 内置Clash规则 = `rules:
 	- 'MATCH,美国家宽'`;
 
 export function buildRuntimeState(env = {}) {
-	let subConverter = env.SUBAPI || DEFAULT_STATE.subConverter;
-	let subProtocol = 'https';
+  let subConverter = env.SUBAPI || DEFAULT_STATE.subConverter;
+  let subProtocol = "https";
 
-	if (subConverter.includes('http://')) {
-		subConverter = subConverter.split('//')[1];
-		subProtocol = 'http';
-	} else {
-		subConverter = subConverter.split('//')[1] || subConverter;
-	}
+  if (subConverter.includes("http://")) {
+    subConverter = subConverter.split("//")[1];
+    subProtocol = "http";
+  } else {
+    subConverter = subConverter.split("//")[1] || subConverter;
+  }
 
-	return {
-		...DEFAULT_STATE,
-		mytoken: env.TOKEN || DEFAULT_STATE.mytoken,
-		guestToken: env.GUESTTOKEN || env.GUEST || DEFAULT_STATE.guestToken,
-		BotToken: env.TGTOKEN || DEFAULT_STATE.BotToken,
-		ChatID: env.TGID || DEFAULT_STATE.ChatID,
-		TG: env.TG || DEFAULT_STATE.TG,
-		FileName: env.SUBNAME || DEFAULT_STATE.FileName,
-		SUBUpdateTime: env.SUBUPTIME || DEFAULT_STATE.SUBUpdateTime,
-		subConverter,
-		subConfig: env.SUBCONFIG || DEFAULT_STATE.subConfig,
-		hasCustomSubConfig: Boolean(env.SUBCONFIG),
-		subProtocol,
-	};
+  return {
+    ...DEFAULT_STATE,
+    mytoken: env.TOKEN || DEFAULT_STATE.mytoken,
+    guestToken: env.GUESTTOKEN || env.GUEST || DEFAULT_STATE.guestToken,
+    BotToken: env.TGTOKEN || DEFAULT_STATE.BotToken,
+    ChatID: env.TGID || DEFAULT_STATE.ChatID,
+    TG: env.TG || DEFAULT_STATE.TG,
+    FileName: env.SUBNAME || DEFAULT_STATE.FileName,
+    SUBUpdateTime: env.SUBUPTIME || DEFAULT_STATE.SUBUpdateTime,
+    subConverter,
+    subConfig: env.SUBCONFIG || DEFAULT_STATE.subConfig,
+    hasCustomSubConfig: Boolean(env.SUBCONFIG),
+    subProtocol,
+  };
 }
