@@ -12,3 +12,11 @@ DOMAIN,yooo2.com
 IP-CIDR,172.22.0.0/16
 DOMAIN,safebrowsing.urlsec.qq.com
 DOMAIN,safebrowsing.googleapis.com
+DOMAIN-SUFFIX,toutiao.com
+DOMAIN-SUFFIX,byted.org
+DOMAIN-SUFFIX,bytedance.com
+DOMAIN-SUFFIX,doubao.com
+DOMAIN-SUFFIX,oceancloudapi.com
+DOMAIN-SUFFIX,zjurl.cn
+DOMAIN-SUFFIX,zijieapi.com
+IP-CIDR,192.168.31.0/24

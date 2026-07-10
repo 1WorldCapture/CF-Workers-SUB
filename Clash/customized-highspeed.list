@@ -32,3 +32,10 @@ DOMAIN-SUFFIX,dify.ai
 DOMAIN,registry-1.docker.io
 DOMAIN,context7.com
 DOMAIN,supabase.com
+DOMAIN-SUFFIX,ollama.ai
+DOMAIN-SUFFIX,hf.co
+DOMAIN-SUFFIX,cloudfront.net
+DOMAIN-SUFFIX,tokenflux.dev
+DOMAIN-SUFFIX,ping0.cc
+DOMAIN-SUFFIX,floppydata.com
+DOMAIN-SUFFIX,whoer.net

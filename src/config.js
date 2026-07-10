@@ -51,7 +51,6 @@ dns:
 proxies:`;
 export const 内置Clash规则 = `rules:
   - 'DOMAIN-SUFFIX,whoer.com,美国家宽'
-  - 'DOMAIN-SUFFIX,whoer.net,美国家宽'
 	- 'IP-CIDR,160.79.104.0/22,美国家宽,no-resolve'
 	- 'IP-CIDR,34.160.0.0/12,美国家宽,no-resolve'
 	- 'IP-CIDR,34.96.0.0/14,美国家宽,no-resolve'

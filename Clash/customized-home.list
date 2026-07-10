@@ -7,4 +7,19 @@ DOMAIN-SUFFIX,calendar.google.com
 DOMAIN-SUFFIX,play.google.com
 PROCESS-NAME,node.exe
 DOMAIN-SUFFIX,paypal.com
-    
+PROCESS-NAME,pi
+PROCESS-NAME,Codex
+PROCESS-NAME,codex
+PROCESS-NAME,Codex Helper
+PROCESS-NAME,Codex Helper (Renderer)
+PROCESS-NAME,Codex (Renderer)
+PROCESS-NAME,Codex (Service)
+PROCESS-NAME,ChatGPT
+PROCESS-NAME,com.apple.ChatGPT for Chrome
+PROCESS-NAME,SkyComputerUseService
+PROCESS-NAME,CodexBar
+PROCESS-NAME,com.apple.WebKit.Networking
+PROCESS-NAME,Gemini
+PROCESS-NAME,GeminiAppLauncher
+PROCESS-NAME,Figma
+PROCESS-NAME,Figma Helper (Renderer)
