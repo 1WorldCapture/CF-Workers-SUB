@@ -1,0 +1,4 @@
+# MoreLogin 日志/环境 CDN 子域，直连
+DOMAIN-SUFFIX,cdn-env.morelogin.com
+DOMAIN-SUFFIX,cb-log.morelogin.com
+DOMAIN-SUFFIX,datasink.morelogin.com

@@ -1,5 +1,5 @@
 const 文本缓存 = new Map();
-const 远程缓存版本 = '20260329-1';
+const 远程缓存版本 = '20260823-1';
 
 function 获取缓存键(url) {
   return `${远程缓存版本}:${url}`;

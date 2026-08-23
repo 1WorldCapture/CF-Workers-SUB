@@ -1,9 +1,5 @@
 PROCESS-PATH,/Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/MacOS/ChatGPT Atlas
 PROCESS-PATH,/Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/Frameworks/ChatGPT Atlas Framework.framework/Versions/current/Helpers/ChatGPT Atlas (Renderer).app/Contents/MacOS/ChatGPT Atlas (Renderer)
-DOMAIN-SUFFIX,cdn-env.morelogin.com,DIRECT
-DOMAIN-SUFFIX,cb-log.morelogin.com,DIRECT
-DOMAIN-SUFFIX,datasink.morelogin.com,DIRECT
-DOMAIN-SUFFIX,morelogin.com,美国高速
 PROCESS-PATH,/Applications/MoreLogin.app/Contents/Frameworks/MoreLogin Helper.app/Contents/MacOS/MoreLogin Helper
 PROCESS-PATH,/Applications/MoreLogin.app/Contents/Frameworks/MoreLogin Helper (Plugin).app/Contents/MacOS/MoreLogin Helper (Plugin)
 PROCESS-PATH,/Applications/MoreLogin.app/Contents/Frameworks/MoreLogin Helper (GPU).app/Contents/MacOS/MoreLogin Helper (GPU)
@@ -12,4 +8,3 @@ PROCESS-NAME,MoreLogin
 PROCESS-NAME,MoreLogin Helper
 PROCESS-NAME,MoreLogin Helper (Renderer)
 PROCESS-NAME,MoreLogin Helper (GPU)
-DOMAIN-SUFFIX,morelogin.com
