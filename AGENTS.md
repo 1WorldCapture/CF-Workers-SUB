@@ -9,6 +9,8 @@ Two independent deployment paths (see Verification):
 - **Ruleset files under `Clash/`** deploy by `git push` to `master` — the Worker fetches them live from `raw.githubusercontent.com` at subscription-generation time.
 - **Worker code (`src/`) and `wrangler.toml`** deploy via `npm run deploy` (esbuild bundle + `wrangler deploy`).
 
+Common failure trap: the SUBCONFIG (`ruleset=<policy>,<url>` lines) lives only in the local gitignored `wrangler.toml` `[vars]`. Pushing a new list file to git does nothing until a matching `ruleset=` line is added to `wrangler.toml` **and** the Worker is redeployed.
+
 ## Directory structure
 
 ```
@@ -44,10 +46,11 @@ Wrangler auth: `npx wrangler login` (OAuth token expires; non-interactive shells
 ## Rule engine gotchas (learned the hard way)
 
 1. **No inline per-line policies in `.list` files.** The compiler (`拼接规则策略` in `src/subconfig.js`) appends the SUBCONFIG ruleset policy to **every** rule line. A Surge-style `DOMAIN-SUFFIX,x.com,DIRECT` inside a list becomes an invalid 4-segment rule (`...,DIRECT,<ruleset-policy>`). One list file = one policy; when domains need different policies, split them into separate list files and give each its own `ruleset=<policy>,<url>` line in SUBCONFIG.
-2. **Rule order is SUBCONFIG order, matched top-down.** Put more-specific ruleset lines (e.g. individual subdomains) before broader ones (e.g. `DOMAIN-SUFFIX` of the parent domain, PROCESS-* rules for the same app).
-3. **Remote lists are cached** (`src/remote.js`): 300s in-isolate memory cache + Cloudflare edge cache whose key embeds `远程缓存版本`. After changing remote list files, bump `远程缓存版本` and `npm run deploy`, otherwise the Worker may serve stale lists for a while.
-4. **KV snapshot fallback**: if any upstream subscription fetch fails, the last successfully generated snapshot is served from KV (`handler.js`), which can mask recent rule changes. A fully successful request overwrites it.
-5. **Policy group names** (e.g. `美国高速`) must exist as groups — defaults are auto-built from node-name keywords (`构建默认代理组`), plus `custom_proxy_group` entries in SUBCONFIG.
+2. **Rule order is SUBCONFIG order, matched top-down; there is no prepend directive.** The emitted `rules:` section is the SUBCONFIG `ruleset=` lines flattened in order, then (with `overwrite_original_rules=false`) the built-in template from `src/config.js` appended at the bottom. Exact-string dedup (`去重保序`) keeps the **first** occurrence, so an earlier ruleset silently shadows later duplicates. To make rules win over everything else (e.g. PROCESS-* rules), put their single-policy list file's `ruleset=` line **first** in SUBCONFIG.
+3. **The config-wide catch-all is the last line of the built-in template** (`MATCH,...` at the tail of `内置Clash规则` in `src/config.js`), not a SUBCONFIG entry. Changing the fallback policy = edit that line + `npm run deploy`.
+4. **Remote lists are cached** (`src/remote.js`): 300s in-isolate memory cache + Cloudflare edge cache whose key embeds `远程缓存版本`. After changing remote list files, bump `远程缓存版本` and `npm run deploy`, otherwise the Worker may serve stale lists for a while. A brand-new list URL is never stale — but it only takes effect once its `ruleset=` line is deployed (see overview).
+5. **KV snapshot fallback**: if any upstream subscription fetch fails, the last successfully generated snapshot is served from KV (`handler.js`), which can mask recent rule changes. A fully successful request overwrites it — and a ruleset silently dropped by a transient GitHub failure can itself become the new snapshot. When validating a change, fetch 2–3 times before concluding anything.
+6. **Policy group names** (e.g. `美国高速`) must exist as groups — defaults are auto-built from node-name keywords (`构建默认代理组` in `src/clash.js`: `美国家宽` = 美国+家宽, `美国高速`/`dialer` = `/美国|US/i` minus 家宽, `家宽`, `苏菲家宽`), plus `custom_proxy_group` entries in SUBCONFIG. Any policy name referenced by a rule but never defined is **auto-created** as a select group matched by substring against node names (empty → `DIRECT`), so a typo'd policy silently becomes a near-empty group instead of an error.
 
 ## Verification
 
@@ -59,9 +62,8 @@ curl -s -A "clash.meta" "https://<worker>/auto?sub" | grep <rule>   # Clash YAML
 curl -s "https://<worker>/auto?sub" | head                          # base64 node list only
 ```
 
-`auto` is the default TOKEN path (`TOKEN` env overridable). To verify a ruleset change end-to-end: push to master, confirm `raw.githubusercontent.com` serves the new file, deploy (if SUBCONFIG or cache version changed), then curl with a Clash UA and grep the generated `rules:` section for the expected `TYPE,value,POLICY` triples. A transient GitHub fetch failure can silently drop a ruleset (`安全编译规则集条目` skips on error) — retry before concluding the change is wrong.
+`auto` is the default TOKEN path (`TOKEN` env overridable) — do not commit the real worker URL, it is a live subscription endpoint. To verify a ruleset change end-to-end: push to master, confirm `raw.githubusercontent.com` serves the new file, deploy (if SUBCONFIG or cache version changed), then curl with a Clash UA and grep the generated `rules:` section for the expected `TYPE,value,POLICY` triples. A transient GitHub fetch failure can silently drop a ruleset (`安全编译规则集条目` skips on error) — retry before concluding the change is wrong. Two more checking notes: `proxy-groups` are emitted as JSON flow-style entries (`{"name":"美国高速",...}`), so grep for the quoted form, not `name: <group>`; and clients cache the profile per `Profile-Update-Interval` (hours), so curl is the reliable check, not the client UI.
 
 ## Handcraft
 
 <!-- Human-maintained. Do not edit in agents-md skill updates. -->
-
