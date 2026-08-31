@@ -563,7 +563,7 @@ export const 内置Clash规则 = `rules:
 	- 'DOMAIN-SUFFIX,cn,DIRECT'
 	- 'DOMAIN-KEYWORD,-cn,DIRECT'
 	- 'GEOIP,CN,DIRECT'
-	- 'MATCH,美国家宽'`;
+	- 'MATCH,美国高速'`;
 
 export function buildRuntimeState(env = {}) {
   let subConverter = env.SUBAPI || DEFAULT_STATE.subConverter;
