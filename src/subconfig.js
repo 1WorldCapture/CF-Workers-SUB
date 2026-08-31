@@ -16,8 +16,16 @@ function 去重保序(items = []) {
   return result;
 }
 
-function 规范化规则源行(line = '') {
-  return line.trim().replace(/\s+#.*$/, '');
+export function 规范化规则源行(line = '') {
+  let normalized = line.trim().replace(/\s+#.*$/, '');
+  // 兼容 Clash rule-provider 载荷格式：跳过 payload: 头、剥离 YAML 列表前缀与引号
+  if (/^payload:?$/.test(normalized)) return '';
+  normalized = normalized.replace(/^- +/, '').replace(/^['"]|['"]$/g, '');
+  // behavior: domain 载荷（+.example.com / .example.com / 裸域名）转 DOMAIN-SUFFIX
+  if (!normalized.includes(',') && /^[+.]*(?:[a-z0-9*][a-z0-9*-]*\.)+[a-z]{2,}$/i.test(normalized)) {
+    normalized = `DOMAIN-SUFFIX,${normalized.replace(/^[+.]+/, '')}`;
+  }
+  return normalized;
 }
 
 function 拼接规则策略(ruleText = '', policy = '') {
