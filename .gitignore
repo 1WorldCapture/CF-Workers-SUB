@@ -1,4 +1,6 @@
 .omx
+.zcode
+.DS_Store
 wrangler.toml
 .wrangler
 _worker.js
