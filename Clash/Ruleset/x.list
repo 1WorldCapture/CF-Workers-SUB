@@ -1,0 +1,5 @@
+# X (Twitter) 域名 —— 基于 Proxyman 实测流量（x.com 主站/API、twimg 媒体 CDN、t.co 短链）
+# grok.com / x.ai 已由 AI.list 覆盖（美国家宽），此处不重复
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,t.co
