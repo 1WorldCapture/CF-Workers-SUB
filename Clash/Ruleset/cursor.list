@@ -1,4 +1,6 @@
 # Cursor 编辑器 / agent CLI 进程规则 —— 全局前置，走美国家宽
+# cursor-agent 是 symlink→版本目录的 bash 脚本，exec 后真实进程是 versions/<ver>/node（进程名 node），
+# 因此靠 versions 正则匹配；bin 下的字面 symlink 路径用用户名无关正则兜底。
 PROCESS-NAME,Cursor
 PROCESS-NAME,Cursor Helper
 PROCESS-NAME,Cursor Helper (Renderer)
@@ -6,6 +8,6 @@ PROCESS-NAME,Cursor Helper (Plugin)
 PROCESS-NAME,Cursor Helper (GPU)
 PROCESS-NAME,cursor-agent
 PROCESS-PATH,/Applications/Cursor.app/Contents/MacOS/Cursor
-PROCESS-PATH,/Users/lyon/.local/bin/cursor-agent
 PROCESS-PATH-REGEX,(?i).*/Cursor\.app/.*
-PROCESS-PATH-REGEX,(?i)/Users/lyon/\.local/share/cursor-agent/versions/.+/(cursor-agent|node)$
+PROCESS-PATH-REGEX,(?i)/(Users|home)/[^/]+/\.local/bin/cursor-agent$
+PROCESS-PATH-REGEX,(?i)/(Users|home)/[^/]+/\.local/share/cursor-agent/versions/.+/(cursor-agent|node)$
