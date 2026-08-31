@@ -620,18 +620,21 @@ function 匹配美国高速节点(name = '') {
 }
 
 export function 构建默认代理组(所有节点名 = []) {
+  // 上游订阅会把"剩余流量/套餐到期/官网地址"等信息行当节点下发，分组时剔除这些假节点
+  const 有效节点名 = 所有节点名.filter(name => !/剩余流量|距离下次|套餐到期|官网地址/.test(name));
+
   const 额外地区组 = 内置Clash地区分组关键词.map(groupName => ({
     name: groupName,
     type: 'select',
-    proxies: 所有节点名.filter(name => name.includes(groupName)),
+    proxies: 有效节点名.filter(name => name.includes(groupName)),
   }));
 
   return [
-    { name: '苏菲家宽', type: 'select', proxies: 所有节点名 },
-    { name: '美国家宽', type: 'select', proxies: 所有节点名.filter(name => name.includes('美国') && name.includes('家宽')) },
-    { name: '美国高速', type: 'select', proxies: 所有节点名.filter(匹配美国高速节点) },
-    { name: 'dialer', type: 'select', proxies: 所有节点名.filter(匹配美国高速节点) },
-    { name: '家宽', type: 'select', proxies: 所有节点名.filter(name => name.includes('家宽')) },
+    { name: '苏菲家宽', type: 'select', proxies: 有效节点名 },
+    { name: '美国家宽', type: 'select', proxies: 有效节点名.filter(name => name.includes('美国') && name.includes('家宽')) },
+    { name: '美国高速', type: 'select', proxies: 有效节点名.filter(匹配美国高速节点) },
+    { name: 'dialer', type: 'select', proxies: 有效节点名.filter(匹配美国高速节点) },
+    { name: '家宽', type: 'select', proxies: 有效节点名.filter(name => name.includes('家宽')) },
     ...额外地区组,
   ];
 }
