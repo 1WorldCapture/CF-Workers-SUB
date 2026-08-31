@@ -1,0 +1,15 @@
+# codex / ChatGPT 进程规则 —— 全局前置，走美国家宽
+PROCESS-NAME,codex
+PROCESS-NAME,codex-code-mode-host
+PROCESS-PATH,/opt/homebrew/bin/codex
+PROCESS-PATH-REGEX,(?i)/opt/homebrew/(bin/codex|Caskroom/codex/.+/bin/(codex|codex-code-mode-host))$
+PROCESS-PATH-REGEX,(?i)/Applications/ChatGPT\.app/
+PROCESS-PATH-REGEX,(?i).*/Applications/ChatGPT\.app/.*
+PROCESS-PATH-REGEX,(?i).*/Codex Computer Use\.app/.*
+PROCESS-NAME,SkyComputerUseService
+PROCESS-NAME,ChatGPT
+PROCESS-PATH,/Applications/ChatGPT.app/Contents/MacOS/ChatGPT
+PROCESS-PATH,/Applications/ChatGPT.app/Contents/Resources/codex
+PROCESS-PATH,/Applications/ChatGPT.app/Contents/Resources/codex-code-mode-host
+PROCESS-PATH,/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node
+PROCESS-PATH,/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl
