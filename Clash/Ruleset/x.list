@@ -1,5 +1,8 @@
-# X (Twitter) 域名 —— 基于 Proxyman 实测流量（x.com 主站/API、twimg 媒体 CDN、t.co 短链）
-# grok.com / x.ai 已由 AI.list 覆盖（美国家宽），此处不重复
+# X (Twitter) + Grok (xAI) 域名 —— 统一维护
+# 基于 Proxyman 实测流量：x.com 主站/API、twimg 媒体 CDN、t.co 短链
+# grok.com / x.ai 自 AI.list 迁入（assets/cdn.grok.com 由后缀覆盖）
 DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,twimg.com
 DOMAIN-SUFFIX,t.co
+DOMAIN-SUFFIX,grok.com
+DOMAIN-SUFFIX,x.ai
