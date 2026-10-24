@@ -203,10 +203,13 @@ function 解析Vless节点(line) {
       proxy['http-opts'] = 构建HTTP配置(params.get('path'), params.get('host'));
     }
     if (security === 'reality') {
-      proxy['reality-opts'] = 清理空字段({
+      const realityOpts = {
         'public-key': params.get('pbk') || params.get('public-key'),
         'short-id': params.get('sid') || params.get('short-id'),
-      });
+      };
+      const mlkem = (params.get('support-x25519mlkem768') || '').trim().toLowerCase();
+      if (mlkem === 'true' || mlkem === '1') realityOpts['support-x25519mlkem768'] = true;
+      proxy['reality-opts'] = 清理空字段(realityOpts);
     }
     return 创建Clash节点(解析节点名称(parsed.hash), proxy);
   } catch (error) {
