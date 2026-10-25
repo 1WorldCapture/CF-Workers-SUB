@@ -11,7 +11,6 @@ DOMAIN-SUFFIX,qwen.ai
 DOMAIN,yooo2.com
 IP-CIDR,172.22.0.0/16
 DOMAIN,safebrowsing.urlsec.qq.com
-DOMAIN,safebrowsing.googleapis.com
 DOMAIN-SUFFIX,toutiao.com
 DOMAIN-SUFFIX,byted.org
 DOMAIN-SUFFIX,bytedance.com
@@ -24,8 +23,8 @@ IP-CIDR,192.168.31.0/24
 DOMAIN-SUFFIX,cdn-env.morelogin.com
 DOMAIN-SUFFIX,cb-log.morelogin.com
 DOMAIN-SUFFIX,datasink.morelogin.com
-# 腾讯 / QQ 直连。38.55.131.6/24 主机位非 0，Clash 会拒载，写成网段地址
+# 腾讯 / QQ 直连
 IP-CIDR,49.51.204.39/32
 DOMAIN-SUFFIX,tencent.com
-IP-CIDR,38.55.131.0/24
+IP-CIDR,38.55.131.6/32
 DOMAIN-SUFFIX,qq.com
