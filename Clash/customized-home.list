@@ -14,3 +14,4 @@ PROCESS-NAME,Gemini
 PROCESS-NAME,GeminiAppLauncher
 PROCESS-NAME,Figma
 PROCESS-NAME,Figma Helper (Renderer)
+DOMAIN-SUFFIX,googleapis.com

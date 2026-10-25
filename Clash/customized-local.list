@@ -24,3 +24,8 @@ IP-CIDR,192.168.31.0/24
 DOMAIN-SUFFIX,cdn-env.morelogin.com
 DOMAIN-SUFFIX,cb-log.morelogin.com
 DOMAIN-SUFFIX,datasink.morelogin.com
+# 腾讯 / QQ 直连。38.55.131.6/24 主机位非 0，Clash 会拒载，写成网段地址
+IP-CIDR,49.51.204.39/32
+DOMAIN-SUFFIX,tencent.com
+IP-CIDR,38.55.131.0/24
+DOMAIN-SUFFIX,qq.com
